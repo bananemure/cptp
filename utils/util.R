@@ -5,14 +5,19 @@
 #################################################################################################
 
 ##### -----------Load dependencies
-if(!suppressWarnings(require(data.table,warn.conflicts = F,quietly = T))){
+if(!suppressWarnings(require('data.table',warn.conflicts = F,quietly = T))){
   install.packages('data.table')
-  library(data.table,quietly = T,warn.conflicts = F)
+  library('data.table',quietly = T,warn.conflicts = F)
 }
 
-if(!suppressWarnings(require(stringi,warn.conflicts = F,quietly = T))){
+if(!suppressWarnings(require('stringi',warn.conflicts = F,quietly = T))){
   install.packages('stringi')
-  library(stringi,quietly = T,warn.conflicts = F)
+  library('stringi',quietly = T,warn.conflicts = F)
+}
+
+if(!suppressWarnings(require('opal',warn.conflicts = F,quietly = T))){
+  install.packages('opal', repos='http://cran.obiba.org', type='source')
+  library('opal',quietly = T,warn.conflicts = F)
 }
 
 
@@ -127,9 +132,10 @@ my.util$is.whole <-function(x)
 #ex: schoolmath::is.whole(x) vs schoolmath::is.decimal
 
 my.util$is.Number<-function(var){#check that all valid-value (non missing) are number
-  if(is.allNA(var)) return (FALSE)
-  var<-na.omit(var)
-  all(stri_detect_regex(var,pattern = '^\\d$|^\\d*\\.(?=\\d+$)'))
+  if(is.allNA(var) || has.Boolean(var)) return (FALSE)
+  var<-suppressWarnings(as.numeric(na.omit(var)))
+  #all(stri_detect_regex(var,pattern = '^\\d$|^\\d*\\.(?=\\d+$)'))
+  !any(is.na(var))
 }
 
 
@@ -166,7 +172,9 @@ my.util$is.Categorical <- function(var,numlevels) { #check if var is categorical
 
 ##############################boolean#################################
 my.util$is.boolean <-function(x){
-  stri_detect_regex(x,pattern = '^TRUE$|^FALSE$')
+  check <- stri_detect_regex(x,pattern = '^TRUE$|^FALSE$')
+  check[is.na(check)] <- F
+  check
 }
 
 my.util$has.Boolean <- function(var){
@@ -224,12 +232,12 @@ my.util$predict.opal.type<-function(var){
   if(all(is.na(var))){
     'missing'
   }else{
-    num <-  mean(stri_detect_regex(a,pattern = '^\\d$|^\\d*\\.(?=\\d+$)'),na.rm = T)*100
+    num <-  mean(stri_detect_regex(var,pattern = '^\\d$|^\\d*\\.(?=\\d+$)'),na.rm = T)*100
     if (num == 50) 'undetermined'
     else if (num>50) 'numeric'
     else {
       bool <- mean(is.boolean(var),na.rm = T)*100
-      ifelse(bool > 50, 'boolean', ifelse(bool == 50 ,'undetermined':'text'))
+      ifelse(bool > 50, 'boolean', ifelse(bool == 50 ,'undetermined','text'))
     }
   }
 }
