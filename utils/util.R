@@ -72,9 +72,9 @@ my.util$vars.with.pattern<-function(datatable,pattern)
 my.util$has.duplicate<-function(var,pattern= NULL)
 {
   if(is.null(pattern)) { 
-    pattern <-"(\\b[:alnum:]+)(?=\\s*\\|\\s*\\1\\b)"
+    pattern <-"(^.+)(?=\\s*\\|\\s*\\1\\b)"
   }
-  has.pattern(var,pattern)
+  has.pattern(stri_trim(var),pattern)
 }
 
 
@@ -134,7 +134,7 @@ my.util$is.whole <-function(x)
 my.util$is.Number<-function(var){#check that all valid-value (non missing) are number
   if(is.allNA(var) || has.Boolean(var)) return (FALSE)
   var<-suppressWarnings(as.numeric(na.omit(var)))
-  #all(stri_detect_regex(var,pattern = '^\\d$|^\\d*\\.(?=\\d+$)'))
+  #all(stri_detect_regex(var,pattern = '^\\d+$|^\\d\\.*(?=\\d+$)'))
   !any(is.na(var))
 }
 
@@ -160,7 +160,8 @@ my.util$is.Integer<-function(var){ #check that all valid-value (non missing) are
 my.util$has.Number<-function(var){  #check if var has at least one value of type number
   if(is.allNA(var)) return (FALSE)
   var<-na.omit(var)
-  any(stri_detect_regex(var,pattern = '^\\d$|^\\d*\\.(?=\\d+$)'))
+  var.num <- suppressWarnings(as.numeric(var))
+  any((!is.boolean(var)) & (!is.na(var.num)))
 }
 
 my.util$is.Categorical <- function(var,numlevels) { #check if var is categorical variable with max 10 categories 
@@ -172,7 +173,7 @@ my.util$is.Categorical <- function(var,numlevels) { #check if var is categorical
 
 ##############################boolean#################################
 my.util$is.boolean <-function(x){
-  check <- stri_detect_regex(x,pattern = '^TRUE$|^FALSE$')
+  check <- stri_detect_regex(stri_trim(x),pattern = '^TRUE$|^FALSE$')
   check[is.na(check)] <- F
   check
 }
@@ -218,7 +219,7 @@ my.util$vars.with.all.NA.string <- function(datatable)
 #############################################
 my.util$has.non.numeric<-function(var){
   var<-na.omit(var)
-  T %in% is.na(suppressWarnings(as.numeric(var)))
+  has.Boolean(var) || any(is.na(suppressWarnings(as.numeric(var))))
 }
 
 ###################################OPAL VARIABLE TYPE ###########
@@ -232,7 +233,7 @@ my.util$predict.opal.type<-function(var){
   if(all(is.na(var))){
     'missing'
   }else{
-    num <-  mean(stri_detect_regex(var,pattern = '^\\d$|^\\d*\\.(?=\\d+$)'),na.rm = T)*100
+    num <-  mean(stri_detect_regex(var,pattern = '^\\d+$|^\\d*\\.(?=\\d+$)'),na.rm = T)*100
     if (num == 50) 'undetermined'
     else if (num>50) 'numeric'
     else {
