@@ -269,6 +269,27 @@ my.util$which.na <- function(var)
   which(is.na(var))
 }
 
+my.util$which.na.string <- function(var)
+{
+  which(stri_detect_regex(var,'^NA$',case_insensitive=T))
+}
+
+##this function will convert all "NA" to NA in the dataset
+my.util$na.string.to.NA <- function (datatable){
+  dt <- datatable
+  #get index of na.string
+  indx.all <- sapply(dt,which.na.string)
+ 
+  for(k in seq(length(indx.all))){
+    k <- as.integer(k)
+    #convert all vars to character first
+    set(dt,j = k,value = dt[,sapply(.SD,as.character),.SDcols = k])
+    #now transform na.string to NA
+    set(dt,i=indx.all[[k]],j = k,value = NA)
+  } 
+}
+
+
 #################################CONNECTING TO OPAL ##########################################
 # This function is a more general settings
 # it will contain credentials to connect to opal and useful helper function
