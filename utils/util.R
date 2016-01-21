@@ -326,11 +326,12 @@ my.util$run.close<-function(all=F)
   objs <- ls(name=.GlobalEnv)
   if(length(objs)){
     for(obj in objs){
-      obj<- eval(parse(text=obj))
-      if ('opal' %in% class(obj)){
+      obj.val<- eval(parse(text=obj))
+      if ('opal' %in% class(obj.val)){
         message('Closing opal(s) server connection(s)')
-        obj.opal <- obj
+        obj.opal <- obj.val
         opal.logout(obj.opal)
+        rm(list=obj,pos = search())
         cat(paste0('< ', obj.opal$name,' > server is disconnected...'),sep='\n')
       }
     }
